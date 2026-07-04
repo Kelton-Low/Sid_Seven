@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Breaking Judge Panel</title>
+<style>
+  :root{
+    --red: #c0392b;
+    --blue: #2980b9;
+    --bg: #000;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    background:var(--bg);
+    color:#fff;
+    font-family:'Courier New', monospace;
+  }
+  .app{
+    position:relative;
+    width:100%;
+    height:100vh;
+    overflow:hidden;
+  }
+  .page{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 20px;
+    opacity:0;
+    pointer-events:none;
+    transform:translateX(30px);
+    transition:opacity .3s ease, transform .3s ease;
+    overflow-y:auto;
+  }
+  .page.active{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateX(0);
+  }
+
+  .header{
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    max-width:500px;
+    font-size:1.1em;
+    margin-bottom:20px;
+    flex-shrink:0;
+  }
+  .header .left-name{text-align:right;}
+
+  .criteria{
+    width:100%;
+    max-width:500px;
+    flex:1;
+  }
+  .crit-block{margin-bottom:22px;}
+  .crit-label{
+    text-align:center;
+    font-size:1.1em;
+    margin-bottom:10px;
+  }
+  .slider-wrap{
+    position:relative;
+    height:56px;
+    border-radius:30px;
+    border:2px solid #fff;
+    background:linear-gradient(to right, var(--red), #333 48%, #333 52%, var(--blue));
+    overflow:hidden;
+  }
+  input[type=range]{
+    -webkit-appearance:none;
+    appearance:none;
+    width:100%;
+    height:56px;
+    margin:0;
+    background:transparent;
+    position:relative;
+    z-index:2;
+    cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{height:56px;background:transparent;}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:48px;
+    height:48px;
+    margin-top:4px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #fff, #bbb);
+    border:2px solid #fff;
+    cursor:grab;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #fff, #bbb);
+    border:2px solid #fff;
+    cursor:grab;
+  }
+  input[type=range]::-moz-range-track{height:56px;background:transparent;}
+
+  .nav-row{
+    display:flex;
+    justify-content:flex-end;
+    width:100%;
+    max-width:500px;
+    margin-top:10px;
+    flex-shrink:0;
+  }
+  .nav-row.split{justify-content:space-between;}
+  .btn{
+    background:#e8e8e8;
+    color:#000;
+    border:none;
+    border-radius:24px;
+    padding:14px 34px;
+    font-size:1em;
+    font-family:inherit;
+    cursor:pointer;
+    transition:transform .1s ease, background .2s ease;
+  }
+  .btn:hover{background:#fff;}
+  .btn:active{transform:scale(0.96);}
+  .btn.ghost{
+    background:transparent;
+    border:2px solid #444;
+    color:#888;
+  }
+  .btn.ghost:hover{border-color:#888;color:#fff;background:transparent;}
+  .btn:disabled{opacity:0.3;cursor:default;}
+
+  /* Setup page */
+  .setup-page{justify-content:center; text-align:center;}
+  .setup-title{
+    font-size:1.8em;
+    margin-bottom:10px;
+  }
+  .setup-sub{
+    color:#888;
+    margin-bottom:30px;
+    font-size:0.9em;
+  }
+  .team-input-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    margin-bottom:40px;
+  }
+  .stepper-btn{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    border:2px solid #fff;
+    background:transparent;
+    color:#fff;
+    font-size:1.6em;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .stepper-btn:hover{background:#222;}
+  .stepper-btn:active{transform:scale(0.94);}
+  #teamSizeDisplay{
+    font-size:2.6em;
+    min-width:70px;
+  }
+
+  /* Round indicator on scoring page */
+  .progress{
+    font-size:0.8em;
+    color:#888;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    text-align:center;
+    margin-bottom:4px;
+    width:100%;
+  }
+
+  /* Result page */
+  .result-page{justify-content:center;}
+  .result-text{
+    font-size:2.6em;
+    font-weight:bold;
+    line-height:1.2;
+    text-align:center;
+    margin-bottom:30px;
+  }
+  .breakdown{
+    width:100%;
+    max-width:400px;
+    font-size:0.9em;
+    color:#ccc;
+    margin-bottom:20px;
+  }
+  .breakdown-row{
+    display:flex;
+    justify-content:space-between;
+    padding:6px 0;
+    border-bottom:1px solid #222;
+  }
+  .breakdown-row.total{
+    border-top:1px solid #555;
+    border-bottom:none;
+    margin-top:6px;
+    padding-top:10px;
+  }
+  .round-heading{
+    font-size:0.85em;
+    color:#f0a500;
+    margin:14px 0 4px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+
+  @media (max-width:500px){
+    .crit-label{font-size:1em;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- SETUP PAGE -->
+  <div class="page setup-page active" id="page-setup">
+    <div class="setup-title">How many rounds?</div>
+    <div class="setup-sub">You'll judge each round one at a time</div>
+    <div class="team-input-row">
+      <button class="stepper-btn" data-action="dec">&minus;</button>
+      <div id="teamSizeDisplay">1</div>
+      <button class="stepper-btn" data-action="inc">&plus;</button>
+    </div>
+    <div class="nav-row">
+      <button class="btn" data-action="start">Start Judging</button>
+    </div>
+  </div>
+
+  <!-- SCORING PAGE: all sliders together -->
+  <div class="page" id="page-score">
+    <div class="progress" id="roundProgress"></div>
+    <div class="header">
+      <div class="right-name">Team Judge's<br>Right</div>
+      <div class="left-name">Team Judge's<br>Left</div>
+    </div>
+
+    <div class="criteria" id="criteria"></div>
+
+    <div class="nav-row split">
+      <button class="btn ghost" data-action="scoreBack">Back</button>
+      <button class="btn" data-action="next">Next</button>
+    </div>
+  </div>
+
+  <!-- RESULT PAGE (shown after every round) -->
+  <div class="page result-page" id="page-result">
+    <div class="header">
+      <div class="right-name">Team Judge's<br>Right</div>
+      <div class="left-name">Team Judge's<br>Left</div>
+    </div>
+    <div class="progress" id="resultProgress"></div>
+    <div class="result-text" id="resultText"></div>
+    <div class="breakdown" id="breakdownWrap"></div>
+    <div class="nav-row split">
+      <button class="btn ghost" data-action="restart">Start Over</button>
+      <button class="btn" data-action="continue" id="continueBtn">Next Round</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const CRITERIA = ["Musicality", "Technique", "Execution", "Vocabulary", "Originality"];
+
+  const pageSetup = document.getElementById('page-setup');
+  const pageScore = document.getElementById('page-score');
+  const pageResult = document.getElementById('page-result');
+  const criteriaContainer = document.getElementById('criteria');
+  const teamSizeDisplay = document.getElementById('teamSizeDisplay');
+  const roundProgress = document.getElementById('roundProgress');
+  const resultProgress = document.getElementById('resultProgress');
+  const continueBtn = document.getElementById('continueBtn');
+
+  let numRounds = 1;
+  let currentRound = 0; // 0-indexed
+  let allRoundScores = []; // array of arrays, one per round
+
+  function goTo(page) {
+    [pageSetup, pageScore, pageResult].forEach(p => p.classList.remove('active'));
+    page.classList.add('active');
+  }
+
+  // Snap a raw slider value to the nearest multiple of 10
+  function snapTo10(v) {
+    return Math.round(v / 10) * 10;
+  }
+
+  // Build sliders (reused each round, values reset)
+  function buildSliders() {
+    criteriaContainer.innerHTML = '';
+    CRITERIA.forEach((name, i) => {
+      const block = document.createElement('div');
+      block.className = 'crit-block';
+      block.innerHTML = `
+        <div class="crit-label">${name}</div>
+        <div class="slider-wrap">
+          <input type="range" min="-100" max="100" value="0" step="10" id="slider-${i}">
+        </div>
+      `;
+      criteriaContainer.appendChild(block);
+    });
+  }
+
+  function getSliderValues() {
+    return CRITERIA.map((_, i) => snapTo10(parseInt(document.getElementById(`slider-${i}`).value, 10)));
+  }
+
+  function startJudging() {
+    currentRound = 0;
+    allRoundScores = [];
+    buildSliders();
+    roundProgress.textContent = `Round 1 of ${numRounds}`;
+    goTo(pageScore);
+  }
+
+  function describeWinner(avg) {
+    if (avg < -2) return `Team Judge's<br>Right<br>Won!`;
+    if (avg > 2) return `Team Judge's<br>Left<br>Won!`;
+    return `It's a<br>Tie!`;
+  }
+
+  function renderRoundBreakdown(vals) {
+    const breakdownWrap = document.getElementById('breakdownWrap');
+    breakdownWrap.innerHTML = '';
+    CRITERIA.forEach((name, i) => {
+      const v = vals[i];
+      const side = v < 0 ? "Right" : v > 0 ? "Left" : "Tie";
+      const row = document.createElement('div');
+      row.className = 'breakdown-row';
+      row.innerHTML = `<span>${name}</span><span>${side} (${Math.abs(v)})</span>`;
+      breakdownWrap.appendChild(row);
+    });
+    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const totalRow = document.createElement('div');
+    totalRow.className = 'breakdown-row total';
+    totalRow.innerHTML = `<span><b>Round Average</b></span><span><b>${avg.toFixed(1)}</b></span>`;
+    breakdownWrap.appendChild(totalRow);
+    return avg;
+  }
+
+  function renderOverallBreakdown() {
+    const breakdownWrap = document.getElementById('breakdownWrap');
+    breakdownWrap.innerHTML = '';
+    allRoundScores.forEach((roundVals, r) => {
+      const heading = document.createElement('div');
+      heading.className = 'round-heading';
+      heading.textContent = `Round ${r + 1}`;
+      breakdownWrap.appendChild(heading);
+
+      CRITERIA.forEach((name, i) => {
+        const v = roundVals[i];
+        const side = v < 0 ? "Right" : v > 0 ? "Left" : "Tie";
+        const row = document.createElement('div');
+        row.className = 'breakdown-row';
+        row.innerHTML = `<span>${name}</span><span>${side} (${Math.abs(v)})</span>`;
+        breakdownWrap.appendChild(row);
+      });
+    });
+    const flatValues = allRoundScores.flat();
+    const overallAvg = flatValues.reduce((a, b) => a + b, 0) / flatValues.length;
+    const totalRow = document.createElement('div');
+    totalRow.className = 'breakdown-row total';
+    totalRow.innerHTML = `<span><b>Overall Average</b></span><span><b>${overallAvg.toFixed(1)}</b></span>`;
+    breakdownWrap.appendChild(totalRow);
+    return overallAvg;
+  }
+
+  document.getElementById('app').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    if (action === 'inc') {
+      numRounds = Math.min(numRounds + 1, 20);
+      teamSizeDisplay.textContent = numRounds;
+    } else if (action === 'dec') {
+      numRounds = Math.max(numRounds - 1, 1);
+      teamSizeDisplay.textContent = numRounds;
+    } else if (action === 'start') {
+      startJudging();
+    } else if (action === 'scoreBack') {
+      if (currentRound === 0) {
+        goTo(pageSetup);
+      } else {
+        currentRound -= 1;
+        const prevVals = allRoundScores.pop();
+        buildSliders();
+        prevVals.forEach((v, i) => {
+          document.getElementById(`slider-${i}`).value = v;
+        });
+        roundProgress.textContent = `Round ${currentRound + 1} of ${numRounds}`;
+      }
+    } else if (action === 'next') {
+      const vals = getSliderValues();
+      allRoundScores[currentRound] = vals;
+
+      const isFinalRound = currentRound === numRounds - 1;
+      let avg;
+      if (isFinalRound) {
+        resultProgress.textContent = `Final Result — after Round ${currentRound + 1} of ${numRounds}`;
+        avg = renderOverallBreakdown();
+        continueBtn.style.display = 'none';
+      } else {
+        resultProgress.textContent = `Result after Round ${currentRound + 1} of ${numRounds}`;
+        avg = renderRoundBreakdown(vals);
+        continueBtn.style.display = 'inline-block';
+        continueBtn.textContent = `Round ${currentRound + 2}`;
+      }
+      document.getElementById('resultText').innerHTML = describeWinner(avg);
+      goTo(pageResult);
+    } else if (action === 'continue') {
+      currentRound += 1;
+      buildSliders();
+      roundProgress.textContent = `Round ${currentRound + 1} of ${numRounds}`;
+      goTo(pageScore);
+    } else if (action === 'restart') {
+      numRounds = 1;
+      teamSizeDisplay.textContent = numRounds;
+      currentRound = 0;
+      allRoundScores = [];
+      goTo(pageSetup);
+    }
+  });
+</script>
+
+</body>
+</html>
