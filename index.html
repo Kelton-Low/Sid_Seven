@@ -248,8 +248,8 @@
   <div class="page" id="page-score">
     <div class="progress" id="roundProgress"></div>
     <div class="header">
-      <div class="right-name">Team Judge's<br>Right</div>
       <div class="left-name">Team Judge's<br>Left</div>
+      <div class="right-name">Team Judge's<br>Right</div>
     </div>
 
     <div class="criteria" id="criteria"></div>
@@ -263,8 +263,8 @@
   <!-- RESULT PAGE (shown after every round) -->
   <div class="page result-page" id="page-result">
     <div class="header">
-      <div class="right-name">Team Judge's<br>Right</div>
       <div class="left-name">Team Judge's<br>Left</div>
+      <div class="right-name">Team Judge's<br>Right</div>
     </div>
     <div class="progress" id="resultProgress"></div>
     <div class="result-text" id="resultText"></div>
@@ -332,8 +332,8 @@
   }
 
   function describeWinner(avg) {
-    if (avg < -2) return `Team Judge's<br>Right<br>Won!`;
-    if (avg > 2) return `Team Judge's<br>Left<br>Won!`;
+    if (avg < -2) return `Team Judge's<br>Left<br>Won!`;
+    if (avg > 2) return `Team Judge's<br>Right<br>Won!`;
     return `It's a<br>Tie!`;
   }
 
@@ -342,7 +342,7 @@
     breakdownWrap.innerHTML = '';
     CRITERIA.forEach((name, i) => {
       const v = vals[i];
-      const side = v < 0 ? "Right" : v > 0 ? "Left" : "Tie";
+      const side = v < 0 ? "Left" : v > 0 ? "Right" : "Tie";
       const row = document.createElement('div');
       row.className = 'breakdown-row';
       row.innerHTML = `<span>${name}</span><span>${side} (${Math.abs(v)})</span>`;
@@ -367,7 +367,7 @@
 
       CRITERIA.forEach((name, i) => {
         const v = roundVals[i];
-        const side = v < 0 ? "Right" : v > 0 ? "Left" : "Tie";
+        const side = v < 0 ? "Left" : v > 0 ? "Right" : "Tie";
         const row = document.createElement('div');
         row.className = 'breakdown-row';
         row.innerHTML = `<span>${name}</span><span>${side} (${Math.abs(v)})</span>`;
